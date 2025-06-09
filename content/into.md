@@ -21,7 +21,7 @@ We propose two alternative schemes to allow implicit conversions using Scala-3's
 The first scheme is
 to have a special type `into[T]` which serves as a marker that conversions into that type are allowed. These types are typically used in parameters of methods that are designed to work with implicit conversions of their arguments. This allows fine-grained control over where implicit conversions should be allowed. We call this scheme "_into as a type constructor_".
 
-TThe second scheme allows `into` as a soft modifier on traits, classes, and opaque type aliases. If a type definition is declared with this modifier, conversions to that type are allowed. The second scheme requires that one has control over the conversion target types so that an `into` can be added to their declaration. It is appropriate where there are a few designated types that are meant to be conversion targets. If that's the case, migration from Scala 2 to Scala 3 becomes easier since no function signatures need to be rewritten. We call this scheme "_into as a modifier_".
+The second scheme allows `into` as a soft modifier on traits, classes, and opaque type aliases. If a type definition is declared with this modifier, conversions to that type are allowed. The second scheme requires that one has control over the conversion target types so that an `into` can be added to their declaration. It is appropriate where there are a few designated types that are meant to be conversion targets. If that's the case, migration from Scala 2 to Scala 3 becomes easier since no function signatures need to be rewritten. We call this scheme "_into as a modifier_".
 
 
 ## Motivation
