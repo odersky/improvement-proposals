@@ -1,6 +1,10 @@
 ---
 layout: sip
-permalink: /sips/into.html
+number: 75
+permalink: /sips/:number.html
+redirect_from:
+  - /sips/:title.html
+  - /sips/:number
 stage: design
 presip-thread: https://contributors.scala-lang.org/t/pre-sip-allow-single-line-lambdas-after/7258
 title: Allow single-line lambdas after `:`
