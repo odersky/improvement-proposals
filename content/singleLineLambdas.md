@@ -66,10 +66,7 @@ Seq((1, 2), (3, 4)).map: _ + _ // error
 Seq(1, 2, 3).map: plus1 // error
 ```
 
-Single-line lambdas can be nested, as in:
-```scala
-  xs.map: x => x.toString + xs.dropWhile: y => y > 0
-```
+Single-line lambdas can not be nested.
 
 ## Detailed Spec
 
@@ -82,13 +79,28 @@ A `:` means application if it is followed by one of the following:
 
 (1) and (2) is the status quo, (3) and (4) are new.
 
-**Restriction:** (3) and (4) do not apply in code that is immediately enclosed in parentheses (without being more closely enclosed in braces or indentation). This is to avoid an ambiguity with type ascription. For instance,
+**Restriction 1:** (3) and (4) do not apply in code that is immediately enclosed in parentheses (without being more closely enclosed in braces or indentation). This is to avoid an ambiguity with type ascription. For instance,
 ```scala
 (
   x: Int => Int
 )
 ```
 still means type ascription, no interpretation as function application is attempted.
+
+**Restriction 2:** Only one `:` meaning application is allowed per line. So the following would both be illegal:
+
+```scala
+  xs.map: x => x.toString + xs.dropWhile: y => y > 0  // error: syntax
+  xs.map: x => x.toString + xs.dropWhile: y =>        // error: syntax
+    y > 0
+```
+One would have to explicitly put braces or parentheses around the second lambda:
+```scala
+  xs.map: x => x.toString + xs.dropWhile(y => y > 0)
+  xs.map: x => x.toString + xs.dropWhile { y =>
+    y > 0
+  }
+```
 
 ## Curried Multi-Line Lambdas
 
