@@ -49,7 +49,7 @@ Ideally, the construct to express optional values should combine the best aspect
 
 We can achieve this by designing a new type with carefully crafted semantics and subtyping and typing rules. The proposed notation for the new type is `T?` (pronounced _maybe T_).
 
-`T?` is used in C#, Kotlin, and other languages to mean essentially `T | Null`. The type proposed here has a crucial difference that makes it parametric: internally, the maybe type `T?` can be seen as a union of _three_ possible types, `T`, `Null`, and `Valid`. Even though the actual implementation is different (see below), we can think if it for now
+`T?` is used in C#, Kotlin, and other languages to mean essentially `T | Null`. The type proposed here has a crucial difference that makes it parametric: internally, the maybe type `T?` can be seen as a union of _three_ possible types, `T`, `Null`, and `Valid`. Even though the actual implementation is different (see below), we can think of it for now
 like this:
 ```scala
   opaque type T? = T | Null | Valid
@@ -199,7 +199,7 @@ There are two arguments in favor:
 
  In summary, I believe if `T?` manages to convince people not to use the non-parametric `T | Null` form, it's already a win.
 
-## Higher Level Usage Patterns
+## Higher level usage patterns
 
 Optionals and error handling are often used in higher-level abstractions. For instance, both `Option` and `Either` can be used in for expressions, which replace explicit pattern matching and construction with a higher-level monadic abstraction. Result types can do that as well. The standard library defines the appropriate `map`, `flatMap` and `withFilter` functions to make this work.
 
@@ -351,7 +351,7 @@ There is a [prototype implementation](https://github.com/scala/scala3/pull/26956
 The proposed extensions need explicit nulls to be enabled. This SIP therefore
 depends on the SIP for explicit nulls to be accepted.
 
-## Comparison with Other Languages
+## Comparison with other languages
 
  - Many languages use the syntax `T?` for essentially `T | Null`. I don't know of a language that makes this type parametric.
  - Kotlin treats `T?` as `T | Null` but the union is second class. That means optional types are not first-class types. Type variables cannot be instantiated to them. The [rich errors proposal](https://github.com/Kotlin/KEEP/blob/main/proposals/KEEP-0441-rich-errors-motivation.md#error-unions) would extend `T?` to `T | E` (with the same second class restrictions).
@@ -360,7 +360,7 @@ depends on the SIP for explicit nulls to be accepted.
 
 
 
-## Compatibility with Existing Features
+## Compatibility with existing features
 
 There is a potential issue with right-biased higher-kinded type inference.
 Matching a type constructor `F[_]` with a type argument `R ? E` would infer
@@ -400,7 +400,7 @@ The downsides are:
      h("a", "b")
      ```
    By contrast, the solution based on maybe types and subtyping has no problems with these patterns.
- - Implicit conversions are generally more brittle than subtyping for type inference. For instance, they cannot influence common supertypes of unions and they do not compose along themselves.
+ - Implicit conversions are generally more brittle than subtyping for type inference. For instance, they cannot influence common supertypes of unions and they do not compose among themselves.
 
 
 
