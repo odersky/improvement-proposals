@@ -13,6 +13,8 @@ https://contributors.scala-lang.org/t/pre-sip-a-new-type-for-optionals-and-error
 title: SIP-NN - A New Type for Optionals and Error Handling
 ---
 
+**By: Martin Odersky, Rex Kerr, Björn Regnell, Adam Warski**
+
 ## Motivation
 
 When it comes to optionals and error handling, do you prefer safety or convenience? You should not have to choose. After all, that's Scala's motto -- combining safety and convenience in one package.
@@ -369,9 +371,6 @@ Matching a type constructor `F[_]` with a type argument `R ? E` would infer
 Right biased higher-kinded type inference was arguably a design mistake caused by overfitting to the `Either` type and blindly copying Haskell. In Haskell, right bias makes sense because type parameters are curried, but in Scala and most other languages it is unnatural.
 
 One could work around the problem and special case `?` to use left-bias instead. But this is not proposed as part of this SIP.
-
-
-
 
 ## Alternative
 
