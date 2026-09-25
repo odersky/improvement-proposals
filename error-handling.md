@@ -93,6 +93,10 @@ Combining these subtyping rules with the rules for union types, we can also deri
 
 Under explicit nulls, Java types `J` often get mapped to `J | Null`. The equivalence means that we can treat these types as maybe types `J?`, as long as `J` is disjoint from `Null` (which is the most common case by far).
 
+**Pattern Matching**
+
+We now allow `T?` as a possible result type of `unapply` methods. This means that extractors can be defined without the usual boxing overhead implied by an `Option` result.
+
 **Erasure**
 
 The erasure of `T?` is the erasure of `T` if `T` is a reference type that is disjoint from `Null`, and `Object` otherwise. For instance, the following overloads are possible, since `String` and `List[String]` are concrete types that do not contain `null`:
@@ -199,7 +203,11 @@ There are two arguments in favor:
    adoption. This would cause just as bad a split in the ecosystem than `T?`
    and would be a strictly worse solution because it gives up on parametricity.
 
- In summary, I believe if `T?` manages to convince people not to use the non-parametric `T | Null` form, it's already a win.
+In summary, if `T?` manages to convince people not to use the non-parametric `T | Null` form, it's already a win.
+
+But it's also important that code can convert smoothly between `Option` and `Either` and the new
+maybe and result types. The standard library will define extension methods that implement such conversions.
+
 
 ## Higher level usage patterns
 
@@ -306,7 +314,12 @@ There is a [prototype implementation](https://github.com/scala/scala3/pull/26956
 
    The `get` method is not accessible from user programs. Therefore, the only way to decompose a maybe type is via a pattern match.
 
- - The companion object of `Maybe` defines extension methods on maybe and result types:
+ - The companion object of `Maybe` defines various extension methods on maybe and result types. They implement:
+
+    - the postfix operator `?`,
+    - functions `map`, `flatMap`, and `withFilter` to implement monadic for expressions over maybe and result types,
+    - functions `withErr` and `mapErr` to replace or map the error portion of a result type,
+    - functions `toOption` and `toEither` to convert maybe types to `Option` and result types to `Either`.
 
     ```scala
     object Maybe {
@@ -331,8 +344,35 @@ There is a [prototype implementation](https://github.com/scala/scala3/pull/26956
           case Ok(y) => f(y)
           case Err(e) => Err(e)
 
+        def toEither: Either[E, A] = x match
+          case Ok(y) => Right(y)
+          case Err(e) => Left(e)
         ...
+
+      extension [A](x: A?)
+        def toOption: Option[A] = x match
+          case Ok(y) => Some(y)
+          case Err(_) => None
     ```
+
+   The standard library also adds methods that map `Option` and `Either` types to the corresponding maybe and result types.
+
+    ```scala
+    class Option[+A]
+      ...
+      final def toMaybe: A? = this match
+        case Some(y) => Ok(y)
+        case None => null
+
+    class Either[+A, +B]
+      ...
+      final def toMaybe: Maybe[B, Unit] = this match
+        case Right(b) => Ok(b)
+        case _ => null
+
+      final def toResult: Maybe[B, A] = this match
+        case Right(b) => Ok(b)
+        case Left(a) => Err(a)
 
  - The parser now understands postfix `?` for both types and terms.
  - The printer prints instances of `Maybe` using the source-level `?` form.
