@@ -130,9 +130,9 @@ Since `T?` is also shorter to write than either `T | Null` or `Option[T]`, there
 
 ## A better type for error handling
 
-`T?` generalizes naturally to a type that's ideal for error handling. It can be seen as a special case of a result type `T ? E`, which can also carry additional error information of type `E` for missing values. So `T ? E` (pronounced _result T or E_) would be an alternative to `Either[E, T]`.
+`T?` generalizes naturally to a type that's ideal for error handling. It can be seen as a special case of a type `T ? E`, which can also carry additional error information of type `E` for missing values. So `T ? E` (pronounced _maybe T unless E_) would be an alternative to `Either[E, T]`.
 
-To go from values `T` to results `T ? E` and back, we use `Ok` as before. For the error part, which was handled by just `null` for maybe types, we now use a new constructor and extractor `Err`. Example:
+To go from values `T` to maybe types `T ? E` and back, we use `Ok` as before. For the error part, which was handled by just `null` for unary maybe types, we now use a new constructor and extractor `Err`. Example:
 ```scala
   def testPos(x: Int): Int ? String =
     if x >= 0 then x else Err(s"negative $x")
@@ -143,11 +143,11 @@ To go from values `T` to results `T ? E` and back, we use `Ok` as before. For th
       log(s)
       0
 ```
-The maybe type `T?` is now simply an abbreviation for `T ? Unit`, a result type where the error component carries no particular information. One tricky aspect is that there are now two ways to signal an error for a maybe type: `null` and `Err(())`. The two ways must come down to the same representation. So we make sure in the `Err` constructor that `Err(()) = null`, and in the `Err` extractor that a `null` value matches an `Err(())` pattern.
+The unary maybe type `T?` is now simply an abbreviation for `T ? Unit` where the error component carries no particular information. One tricky aspect is that there are now two ways to signal an error for a maybe type: `null` and `Err(())`. The two ways must come down to the same representation. So we make sure in the `Err` constructor that `Err(()) = null`, and in the `Err` extractor that a `null` value matches an `Err(())` pattern.
 
 The mechanics of all this are a straightforward extension of the scheme for maybe types.
 
-Internally, the result type `T ? E` can be seen as a union of four possible types:
+Internally, the maybe type `T ? E` can be seen as a union of four possible types:
 ```scala
   opaque type T ? E = T | Valid | Null | Fail[E]
 ```
@@ -173,7 +173,7 @@ The subtyping rules subsume the ones for maybe types. We have additionally:
 
  - `Fail[E] <: T ? E`, for all types `T` and `E`.
  - `T <: T ? E`, if `T` is disjoint from both `Null` and `Fail[Any]`.
- - The result type constructor is also covariant in its error part: if `E1 <: E2` then `T ? E1 <: T ? E2`.
+ - The maybe type constructor is also covariant in its error part: if `E1 <: E2` then `T ? E1 <: T ? E2`.
 
 ## One error type with many uses
 
@@ -197,7 +197,7 @@ On the other hand, the existing types won't go away, and current and future code
 
 There are two arguments in favor:
 
- - Adoption of maybe types and result types will likely begin in codebases where interop with Java is needed, and in greenfield projects where one can start from scratch. We should not deprive ourselves to use a better possible
+ - Adoption of maybe types will likely begin in codebases where interop with Java is needed, and in greenfield projects where one can start from scratch. We should not deprive ourselves to use a better possible
  technical solution if one exists.
  - Non-parametric `T | Null` has enough advantages by itself to attract
    adoption. This would cause just as bad a split in the ecosystem than `T?`
@@ -205,13 +205,12 @@ There are two arguments in favor:
 
 In summary, if `T?` manages to convince people not to use the non-parametric `T | Null` form, it's already a win.
 
-But it's also important that code can convert smoothly between `Option` and `Either` and the new
-maybe and result types. The standard library will define extension methods that implement such conversions.
+But it's also important that code can convert smoothly between `Option` and `Either` and the new maybe types. The standard library will define extension methods that implement such conversions.
 
 
 ## Higher level usage patterns
 
-Optionals and error handling are often used in higher-level abstractions. For instance, both `Option` and `Either` can be used in for expressions, which replace explicit pattern matching and construction with a higher-level monadic abstraction. Result types can do that as well. The standard library defines the appropriate `map`, `flatMap` and `withFilter` functions to make this work.
+Optionals and error handling are often used in higher-level abstractions. For instance, both `Option` and `Either` can be used in for expressions, which replace explicit pattern matching and construction with a higher-level monadic abstraction. Maybe types can do that as well. The standard library defines the appropriate `map`, `flatMap` and `withFilter` functions to make this work.
 
 As an example of monadic error handling, consider the task of parsing a string as a date in the format "`day/month/year`". For parsing integers, we define an extension method `parseInt`:
 ```scala
@@ -307,19 +306,19 @@ There is a [prototype implementation](https://github.com/scala/scala3/pull/26956
       private[compiletime] def get: T
     ```
    The trait is a only a compile-time artifact, since the erasure of a maybe type
-   is either the underlying `result` type or `Object`
+   is either the erasure of the underlying result type `T` or `Object`
 
    The trait has members `isEmpty` and `get`, which makes it eligible as a
    result type of `unapply` methods. Their implementations are special-cased in the pattern matcher.
 
    The `get` method is not accessible from user programs. Therefore, the only way to decompose a maybe type is via a pattern match.
 
- - The companion object of `Maybe` defines various extension methods on maybe and result types. They implement:
+ - The companion object of `Maybe` defines various extension methods on maybe types. They implement:
 
     - the postfix operator `?`,
-    - functions `map`, `flatMap`, and `withFilter` to implement monadic for expressions over maybe and result types,
-    - functions `withErr` and `mapErr` to replace or map the error portion of a result type,
-    - functions `toOption` and `toEither` to convert maybe types to `Option` and result types to `Either`.
+    - functions `map`, `flatMap`, and `withFilter` to implement monadic for expressions over maybe types,
+    - functions `withErr` and `mapErr` to replace or map the error portion of a maybe type,
+    - functions `toOption` and `toEither` to convert maybe types to `Option` and `Either`.
 
     ```scala
     object Maybe {
@@ -355,7 +354,7 @@ There is a [prototype implementation](https://github.com/scala/scala3/pull/26956
           case Err(_) => None
     ```
 
-   The standard library also adds methods that map `Option` and `Either` types to the corresponding maybe and result types.
+   The standard library also adds methods that map `Option` and `Either` to the corresponding maybe types.
 
     ```scala
     class Option[+A]
@@ -397,7 +396,7 @@ depends on the SIP for explicit nulls to be accepted.
 
  - Many languages use the syntax `T?` for essentially `T | Null`. I don't know of a language that makes this type parametric.
  - Kotlin treats `T?` as `T | Null` but the union is second class. That means optional types are not first-class types. Type variables cannot be instantiated to them. The [rich errors proposal](https://github.com/Kotlin/KEEP/blob/main/proposals/KEEP-0441-rich-errors-motivation.md#error-unions) would extend `T?` to `T | E` (with the same second class restrictions).
- - I don't know of any other language that lets one treat `T?` as an instance of a result type `T ? E`.
+ - I don't know of any other language that lets one treat `T?` as an instance of a maybe type `T ? E`.
  - The postfix `?` operator for expressions looks like the one in Rust, but is more general. Rust always aborts to the enclosing function. The scheme presented here introduces `maybe` as an abort scope, and therefore allows multiple such scopes per function, as well as aborting from nested closures.
 
 
